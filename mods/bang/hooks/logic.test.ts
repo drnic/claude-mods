@@ -14,6 +14,8 @@ describe('bang logic', () => {
     expect(lastSuggestion('Run `! gcloud auth login` then `! az login`.')).toBe('az login')
     expect(lastSuggestion('Type this:\n\n```\n! aws sso login --profile dev\n```\n')).toBe('aws sso login --profile dev')
     expect(lastSuggestion('No command here!')).toBe(undefined)
+    expect(lastSuggestion('Run `! ls\u202e -la`')).toBe(undefined)
+    expect(lastSuggestion('Run `! echo a\u200bb`')).toBe(undefined)
   })
 
   test('formats output with the exit code', async () => {

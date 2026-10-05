@@ -8,13 +8,18 @@ export function bangCommand(text: string): string | undefined {
   return m?.[1]?.trim()
 }
 
+// Characters that can hide part of a command on screen: control characters,
+// zero-width spaces and text-direction marks.
+const HIDDEN = /[\u0000-\u001f\u007f\u200b-\u200f\u202a-\u202e\u2066-\u2069\ufeff]/
+
 // The last "! command" in an assistant reply: an inline `! cmd`, or a line that starts with "!".
 export function lastSuggestion(text: string): string | undefined {
   const found: { at: number; cmd: string }[] = []
   for (const m of text.matchAll(/`!\s*([^`\n]+)`/g)) found.push({ at: m.index ?? 0, cmd: m[1]!.trim() })
   for (const m of text.matchAll(/^[ \t]*!\s*([^\n`]+)$/gm)) found.push({ at: m.index ?? 0, cmd: m[1]!.trim() })
   found.sort((a, b) => a.at - b.at)
-  return found.at(-1)?.cmd || undefined
+  const cmd = found.at(-1)?.cmd
+  return cmd && !HIDDEN.test(cmd) ? cmd : undefined
 }
 
 export function formatResult(cmd: string, exitCode: number, stdout: string, stderr: string, timedOut: boolean): string {

@@ -43,13 +43,16 @@ An auto run stops when a phase makes no commit, leaves uncommitted changes, does
 
 ```
 ! git status        sent from the phone: runs the command
-/run                runs the last `! command` that Claude suggested
+/run                shows the last `! command` that Claude suggested
+/run ok             runs exactly the command that /run showed
 /run <command>      runs <command>
 ```
 
 The output goes into the transcript, and Claude reads it. Commands run with `zsh -lc` in the session folder. They get no keyboard input and stop after 10 minutes. A command that waits for input, such as `gcloud auth login`, fails at once.
 
 `/run` runs only when you send it, from the terminal or from Remote Control. Claude cannot start it.
+
+A suggested command comes from Claude's text, and that text can contain words from files or web pages that Claude read. For this reason, `/run` never runs a suggestion at once. It shows the command, and you send `/run ok` to run it. The mod ignores a suggestion that contains control characters, zero-width characters or text-direction marks, because these can hide part of a command on screen.
 
 ## Develop
 

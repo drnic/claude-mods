@@ -5,7 +5,9 @@ import { bangCommand, formatResult, lastSuggestion } from './logic'
 // Lets a Remote Control client (the iOS app, claude.ai) run a shell command on
 // this machine the way `!` does in the terminal. Two ways in:
 //   "! git status" sent from the phone runs that command.
-//   /run with no arguments runs the last `! command` Claude suggested.
+//   /run with no arguments shows the last `! command` Claude suggested, and
+//   /run ok runs exactly that command. Claude's text never reaches the shell
+//   until you have seen the command and confirmed it.
 // The output lands in the transcript, where Claude reads it too.
 
 async function runShell($: EngineInterface, cmd: string): Promise<string> {
@@ -29,6 +31,9 @@ async function suggested($: EngineInterface): Promise<string | undefined> {
 }
 
 export const register: Register = on => {
+  // The suggested command that /run showed, waiting for /run ok.
+  let pending: string | undefined
+
   on('session.start', async ($, e, next) => {
     await $.command.register({
       name: 'run',
@@ -53,8 +58,19 @@ export const register: Register = on => {
     if (by !== 'composer' && by !== 'bridge' && !isOwn) {
       return { text: '/run only runs commands that you send yourself.' }
     }
-    const cmd = e.args.trim() || (await suggested($))
-    if (!cmd) return { text: 'No command given, and Claude has not suggested a ! command in this session.' }
-    return { text: await runShell($, cmd) }
+    const args = e.args.trim()
+    if (args === 'ok') {
+      const cmd = pending
+      pending = undefined
+      if (!cmd) return { text: 'Nothing is waiting. Send /run first to see the suggested command.' }
+      return { text: await runShell($, cmd) }
+    }
+    if (args) {
+      pending = undefined
+      return { text: await runShell($, args) }
+    }
+    pending = await suggested($)
+    if (!pending) return { text: 'Claude has not suggested a ! command in this session.' }
+    return { text: `Claude suggested this command:\n\n${pending}\n\nSend /run ok to run exactly this command.` }
   })
 }
