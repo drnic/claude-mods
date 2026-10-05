@@ -1,0 +1,8 @@
+{
+  "name": "phase",
+  "version": "0.1.0",
+  "description": "Run a plan document one phase at a time, with a fresh or kept context per phase",
+  "author": {
+    "name": "Dr Nic Williams"
+  }
+}

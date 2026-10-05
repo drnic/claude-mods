@@ -1,0 +1,19 @@
+{
+  "name": "claude-mods",
+  "description": "Mods for Claude Code: plan phases and shell commands from Remote Control",
+  "owner": {
+    "name": "Dr Nic Williams"
+  },
+  "plugins": [
+    {
+      "name": "phase",
+      "source": "./mods/phase",
+      "description": "Run a plan document one phase at a time, with a fresh or kept context per phase"
+    },
+    {
+      "name": "bang",
+      "source": "./mods/bang",
+      "description": "Run ! shell commands sent from Remote Control, and /run the last ! command Claude suggested"
+    }
+  ]
+}

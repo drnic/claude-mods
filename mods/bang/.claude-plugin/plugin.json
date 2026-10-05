@@ -1,0 +1,8 @@
+{
+  "name": "bang",
+  "version": "0.1.0",
+  "description": "Run ! shell commands sent from Remote Control, and /run the last ! command Claude suggested",
+  "author": {
+    "name": "Dr Nic Williams"
+  }
+}
