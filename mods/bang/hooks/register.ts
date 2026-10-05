@@ -1,6 +1,6 @@
 import type { EngineInterface, Register } from 'claude-code'
 
-import { bangCommand, formatResult, lastSuggestion } from './logic'
+import { CONFIRM_MS, bangCommand, confirmText, formatResult, lastSuggestion } from './logic'
 
 // Lets a Remote Control client (the iOS app, claude.ai) run a shell command on
 // this machine the way `!` does in the terminal. Two ways in:
@@ -33,6 +33,7 @@ async function suggested($: EngineInterface): Promise<string | undefined> {
 export const register: Register = on => {
   // The suggested command that /run showed, waiting for /run ok.
   let pending: string | undefined
+  let pendingAt = 0
 
   on('session.start', async ($, e, next) => {
     await $.command.register({
@@ -61,8 +62,9 @@ export const register: Register = on => {
     const args = e.args.trim()
     if (args === 'ok') {
       const cmd = pending
+      const isFresh = (await $.clock.now()) - pendingAt <= CONFIRM_MS
       pending = undefined
-      if (!cmd) return { text: 'Nothing is waiting. Send /run first to see the suggested command.' }
+      if (!cmd || !isFresh) return { text: 'Nothing is waiting. Send /run first to see the suggested command.' }
       return { text: await runShell($, cmd) }
     }
     if (args) {
@@ -71,6 +73,7 @@ export const register: Register = on => {
     }
     pending = await suggested($)
     if (!pending) return { text: 'Claude has not suggested a ! command in this session.' }
-    return { text: `Claude suggested this command:\n\n${pending}\n\nSend /run ok to run exactly this command.` }
+    pendingAt = await $.clock.now()
+    return { text: confirmText(pending) }
   })
 }

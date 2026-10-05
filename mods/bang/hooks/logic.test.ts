@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'claude-code/testing'
 
-import { bangCommand, formatResult, lastSuggestion } from './logic'
+import { bangCommand, confirmText, formatResult, lastSuggestion } from './logic'
 
 describe('bang logic', () => {
   test('reads a ! prompt', async () => {
@@ -16,6 +16,12 @@ describe('bang logic', () => {
     expect(lastSuggestion('No command here!')).toBe(undefined)
     expect(lastSuggestion('Run `! ls\u202e -la`')).toBe(undefined)
     expect(lastSuggestion('Run `! echo a\u200bb`')).toBe(undefined)
+  })
+
+  test('fences the confirm text past any backticks in the command', async () => {
+    expect(confirmText('ls')).toContain('```\nls\n```')
+    expect(confirmText('echo ````x')).toContain('`````\necho ````x\n`````')
+    expect(lastSuggestion('`! ' + 'a'.repeat(501) + '`')).toBe(undefined)
   })
 
   test('formats output with the exit code', async () => {
