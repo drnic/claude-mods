@@ -50,7 +50,7 @@ async function addWatch($: $, repo: string, sha: string, reason: string) {
     ...ws.filter(w => w.sha !== sha && (!w.finishedAt || now - w.finishedAt < SHOW_DONE_MS)),
     { sha, repo, reason, startedAt: now, builds: [], deploys: [] },
   ])
-  $.ui.status(`bamboo: watching ${sha.slice(0, 8)}`)
+  $.ui.status(`watching ${sha.slice(0, 8)}`)
 }
 
 async function builds($: $, w: Watch): Promise<Build[]> {
@@ -102,16 +102,19 @@ async function report($: $, w: Watch, outcome: string, isFailure: boolean) {
 }
 
 // Module values start over on each reload; the watches live in $.state.
-let isPolling = false
+// When the last poll started, while it runs. A poll that runs longer than
+// STALE_POLL_MS (a request that never answers) no longer blocks the next one.
+let pollingSince: number | undefined
+const STALE_POLL_MS = 2 * 60_000
 // Deployment environments per master plan key, read once per load.
 const environments = new Map<string, { id: number; name: string }[]>()
 let lastError: string | undefined
 
 async function poll($: $) {
-  if (isPolling) return
-  isPolling = true
+  const now = await $.clock.now()
+  if (pollingSince !== undefined && now - pollingSince < STALE_POLL_MS) return
+  pollingSince = now
   try {
-    const now = await $.clock.now()
     for (const w of await read($, watches)) {
       if (w.outcome) continue
       let next: Watch = w
@@ -130,12 +133,13 @@ async function poll($: $) {
       if (step.outcome) next = { ...next, outcome: step.outcome, isFailure: step.isFailure === true, finishedAt: now }
       const done = next
       await update($, watches, ws => ws.map(x => (x.sha === done.sha ? done : x)))
-      if (step.outcome) await report($, done, step.outcome, step.isFailure === true)
+      // The push notification can wait on a permission dialog: do not hold the poll for it.
+      if (step.outcome) void report($, done, step.outcome, step.isFailure === true).catch(() => undefined)
     }
     const active = (await read($, watches)).filter(w => !w.outcome).length
-    $.ui.status(active > 0 ? `bamboo: watching ${active}` : undefined)
+    $.ui.status(active > 0 ? `watching ${active}` : undefined)
   } finally {
-    isPolling = false
+    pollingSince = undefined
   }
 }
 
