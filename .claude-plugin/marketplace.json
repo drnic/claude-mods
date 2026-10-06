@@ -1,6 +1,6 @@
 {
   "name": "claude-mods",
-  "description": "Mods for Claude Code: plan phases and shell commands from Remote Control",
+  "description": "Mods for Claude Code: plan phases, shell commands from Remote Control, and Bamboo build watches",
   "owner": {
     "name": "Dr Nic Williams"
   },
@@ -14,6 +14,11 @@
       "name": "bang",
       "source": "./mods/bang",
       "description": "Run ! shell commands sent from Remote Control, and /run the last ! command Claude suggested"
+    },
+    {
+      "name": "bamboo",
+      "source": "./mods/bamboo",
+      "description": "Watch the Bamboo build and deployment after each git push or PR merge, in a band above the prompt"
     }
   ]
 }
