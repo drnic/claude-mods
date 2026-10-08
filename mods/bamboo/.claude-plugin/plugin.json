@@ -1,9 +1,0 @@
-{
-  "name": "bamboo",
-  "version": "0.1.0",
-  "description": "Watch the Bamboo build and deployment after each git push or PR merge, in a band above the prompt",
-  "author": {
-    "name": "Dr Nic Williams"
-  },
-  "types": "./types/index.d.ts"
-}
