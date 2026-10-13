@@ -134,6 +134,15 @@ export const register: Register = on => {
     return { text: `Starting the next phase of ${plan}.` }
   })
 
+  // A plan approved in Claude's own plan mode becomes the plan for this folder,
+  // in place of an earlier one, until /phase plan names another.
+  on('prompt.attachment', { type: 'plan_mode_exit' }, async ($, e, next) => {
+    if (e.agentId === undefined && e.detail?.hasPlan) {
+      await $.store.set(planKey(await $.session.root()), e.detail.planFilePath)
+    }
+    return next(e)
+  })
+
   on('turn.start', async ($, e, next) => {
     const root = await $.session.root()
     const plan = await $.store.get(planKey(root))

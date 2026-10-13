@@ -33,6 +33,8 @@ To install from a clone on another machine, give the clone's path or the git URL
 
 If you do not set a plan, the mod looks in `mydocs/` for one `<TICKET>-*-plan.md` file that matches the ticket at the start of the branch name.
 
+If you approve a plan in Claude plan mode, that plan file becomes the plan for the folder. It replaces an earlier plan until you set another with `/phase plan`.
+
 Before each phase, the mod runs `git push`. If the context is at or above the threshold (default 40%), the mod runs `/clear`. If `/clear` fails, it compacts the context. Then it sends a prompt that tells Claude to do the next step, commit and push.
 
 An auto run stops when a phase makes no commit, leaves uncommitted changes, does not push, or replies `ALL PHASES DONE`. It also stops when you interrupt a phase.
