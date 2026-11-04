@@ -14,6 +14,11 @@
       "name": "bang",
       "source": "./mods/bang",
       "description": "Run ! shell commands sent from Remote Control, and /run the last ! command Claude suggested"
+    },
+    {
+      "name": "election",
+      "source": "./mods/election",
+      "description": "Show live 2026 US Senate and House seat counts on the status line, and announce race calls"
     }
   ]
 }
