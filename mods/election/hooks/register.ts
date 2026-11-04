@@ -58,7 +58,10 @@ async function fetchChamber($: EngineInterface, office: 'S' | 'H') {
   const name = office === 'S' ? 'senate' : 'house'
   const url = `${BASE}/results-${name}.json`
   const script = 'set -o pipefail; curl -fsSL --compressed --max-time 45 "$1" | jq -c "$2"'
+  // A session's own folder can be deleted while it runs (a removed worktree), and
+  // then every spawn from it fails with ENOENT. So run from the home folder.
   const res = await $.process.run(['bash', '-c', script, 'election', url, KEEP_CALLED], {
+    cwd: await $.env.get('HOME'),
     stdin: '',
     timeoutMs: 60_000,
   })
@@ -77,7 +80,10 @@ async function poll($: EngineInterface, now: number): Promise<void> {
     const [senate, house] = await Promise.all([fetchChamber($, 'S'), fetchChamber($, 'H')])
     reading = { senate, house }
   } catch (err) {
-    await $.fs.write(file.state, JSON.stringify({ ...shared, claimedAt: now, lastError: String(err) }))
+    // Give the claim back. All sessions check on the same period, so the session
+    // that holds a claim is always the first to see it expire. If it kept the
+    // claim, one failing session would stop all the other sessions from fetching.
+    await $.fs.write(file.state, JSON.stringify({ ...shared, claimedAt: 0, lastError: String(err) }))
     throw err
   }
 
