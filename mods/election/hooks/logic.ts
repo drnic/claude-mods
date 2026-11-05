@@ -47,6 +47,27 @@ type Race = {
   top_reporting_unit?: { state_postal?: string }
 }
 
+// The feed is outside data that reaches the terminal and the model, so only
+// checked values pass this point.
+function count(value: unknown): number {
+  if (value === undefined || value === null) return 0
+  if (!Number.isSafeInteger(value) || (value as number) < 0) {
+    throw new Error('results file has a seat count that is not a whole number')
+  }
+  return value as number
+}
+
+function safeName(value: unknown): string {
+  const isSafe = typeof value === 'string' && /^\p{L}[\p{L} .'\u2019-]{0,39}$/u.test(value)
+  return isSafe ? (value as string) : 'Unknown'
+}
+
+function raceLabel(office: 'S' | 'H', state: unknown, seat: unknown): string {
+  const st = typeof state === 'string' && /^[A-Z]{2}$/.test(state) ? state : '??'
+  if (office === 'S') return st
+  return `${st}-${typeof seat === 'string' && /^\d{1,3}$/.test(seat) ? seat : 'AL'}`
+}
+
 /** Reads one results file. Throws when it does not have the expected shape. */
 export function parseChamber(text: string, office: 'S' | 'H'): Chamber {
   const doc = JSON.parse(text) as Doc
@@ -62,11 +83,10 @@ export function parseChamber(text: string, office: 'S' | 'H'): Chamber {
     const runoff = race.outcome?.advanced_to_runoff ?? []
     const id = won[0] ?? runoff[0]
     if (!race.nyt_id || !id) continue
-    const state = race.top_reporting_unit?.state_postal ?? '??'
     const candidate = race.candidate_metadata?.[id]
     calls[race.nyt_id] = {
-      label: office === 'H' ? `${state}-${race.seat_number ?? 'AL'}` : state,
-      winner: candidate?.last_name ?? id,
+      label: raceLabel(office, race.top_reporting_unit?.state_postal, race.seat_number),
+      winner: safeName(candidate?.last_name),
       party: partyOf(candidate?.party?.nyt_id),
       isFlip: race.outcome?.gained === true,
       isRunoff: won.length === 0,
@@ -75,13 +95,13 @@ export function parseChamber(text: string, office: 'S' | 'H'): Chamber {
 
   const controlledBy = balance.DEM.winner ? 'D' : balance.GOP.winner ? 'R' : undefined
   return {
-    dem: balance.DEM.seats ?? 0,
-    rep: balance.GOP.seats ?? 0,
-    other: balance.OTH?.seats ?? 0,
-    demFlips: balance.DEM.flip_count ?? 0,
-    repFlips: balance.GOP.flip_count ?? 0,
-    demToWin: data?.to_win?.DEM ?? 0,
-    repToWin: data?.to_win?.GOP ?? 0,
+    dem: count(balance.DEM.seats),
+    rep: count(balance.GOP.seats),
+    other: count(balance.OTH?.seats),
+    demFlips: count(balance.DEM.flip_count),
+    repFlips: count(balance.GOP.flip_count),
+    demToWin: count(data?.to_win?.DEM),
+    repToWin: count(data?.to_win?.GOP),
     ...(controlledBy ? { controlledBy } : {}),
     calls,
   }
