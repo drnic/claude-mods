@@ -1,8 +1,0 @@
-{
-  "name": "election",
-  "version": "0.1.1",
-  "description": "Show live 2026 US Senate and House seat counts on the status line, and announce race calls",
-  "author": {
-    "name": "Dr Nic Williams"
-  }
-}
